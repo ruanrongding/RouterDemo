@@ -1,0 +1,66 @@
+//组件模式和集成模式的转换
+if(is_Module.toBoolean()){
+    apply plugin: 'com.android.application'
+}else{
+    apply plugin: 'com.android.library'
+}
+
+
+android {
+    compileSdk rootProject.ext.android["compileSdkVersion"]
+
+    defaultConfig {
+        if(is_Module.toBoolean()){
+            applicationId "com.example.login"
+        }
+
+        minSdk rootProject.ext.android["minSdkVersion"]
+        targetSdk rootProject.ext.android["targetSdkVersion"]
+        versionCode rootProject.ext.android["versionCode"]
+        versionName rootProject.ext.android["versionName"]
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    /**
+     * 定义集成模式下和组件模式下manifest文件的相关配置
+     */
+    sourceSets {
+        main {
+            if (is_Module.toBoolean()) {
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+                java.srcDir('src/main/moudle')
+            } else {
+                manifest.srcFile 'src/main/manifest/AndroidManifest.xml'
+            }
+        }
+    }
+}
+
+
+
+
+dependencies {
+
+//    implementation rootProject.ext.dependencies["appcompat"]
+//    implementation rootProject.ext.dependencies["material"]
+      implementation rootProject.ext.dependencies["constraintLayout"]
+
+//    testImplementation rootProject.ext.dependencies["junit"]
+//    androidTestImplementation rootProject.ext.dependencies["testExtJunit"]
+//    androidTestImplementation rootProject.ext.dependencies["espressoCore"]
+
+
+    implementation project(':commonlibs')
+}

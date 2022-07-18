@@ -7,3 +7,10 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+//引用config.gradle
+apply from: "config.gradle"
+
+
+
+
