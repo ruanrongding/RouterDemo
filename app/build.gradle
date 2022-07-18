@@ -6,6 +6,13 @@ android {
     compileSdk rootProject.ext.android["compileSdkVersion"]
 
     defaultConfig {
+        //Arouter配置
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+
         applicationId "com.example.routerdemo"
         minSdk rootProject.ext.android["minSdkVersion"]
         targetSdk rootProject.ext.android["targetSdkVersion"]
@@ -13,6 +20,9 @@ android {
         versionName rootProject.ext.android["versionName"]
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+
+
     }
 
     buildTypes {
@@ -41,4 +51,8 @@ dependencies {
           implementation project(':share')
     }
     implementation project(':commonlibs')
+
+    //添加阿里巴巴路由Arouter依赖
+    implementation  'com.alibaba:arouter-api:1.5.1'
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.1'
 }

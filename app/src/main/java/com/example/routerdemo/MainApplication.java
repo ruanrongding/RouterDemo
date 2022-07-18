@@ -11,5 +11,6 @@ public class MainApplication extends BaseApplication {
         super.onCreate();
         Log.e("TAG","MainApplication onCreate()");
 
+
     }
 }
