@@ -19,7 +19,7 @@
 
 #### 1.新建项目模块
 
-分别在项目中创建项目组件login, share,commonlibs,app等四个模块，其中commmonlibs是公用类库。login，share,app每个模块目前都可以单独运行
+分别在项目中创建项目组件**login, share,commonlibs,app**等四个模块，其中**commmonlibs**是公用类库。**login，share,app**每个模块目前都可以单独运行
 
   ![项目结构图](https://seikim.com/i/2022/07/19/n861rf.png)
 
@@ -59,7 +59,7 @@ ext{
 //引用config.gradle
 apply from: "config.gradle"
 ``` 
-4. 在各模块中去引用这些版本号,如commonlibs中的build.gradle
+4. 在各模块中去引用这些版本号,如**commonlibs**中的build.gradle
 ``` java
 android {
     
@@ -121,7 +121,7 @@ if(is_Module.toBoolean()){
             applicationId "com.example.share"
         }
 ``` 
-4. 在app模块中添加判断依赖就可以在集成模式下将各模块添加到app主模块中
+4. 在**app**模块中添加判断依赖就可以在集成模式下将各模块添加到app主模块中
 ``` java
  //将各个组件集成到主app中
     if(is_Module.toBoolean()){
@@ -189,7 +189,7 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
         }
     }
 ```
-4. 我们可以在commonlibs基础层内新建application，用于加载一些数据的初始化
+4. 我们可以在**commonlibs**基础层内新建application，用于加载一些数据的初始化
 ``` java
  public class BaseApplication extends Application {
     @Override
@@ -218,6 +218,7 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 
 
 **具体实现**
+
 1.其中 service文件夹中定义接口，LoginService 接口中定义了 Login 组件向外提供的数据传递的接口方法，EmptyService 中是 service 中定义的接口的空实现，ServiceFactory 接收组件中实现的接口对象的注册以及向外提供特定组件的接口实现。
 ``` java
   public interface LoginService {
