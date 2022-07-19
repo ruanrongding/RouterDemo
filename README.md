@@ -201,13 +201,139 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 
 ```
 
-#### 6.组件间的业务数据交互
-1. 组件之间的数据传递
-由于主项目与组件，组件与组件之间都是不可以直接使用类的相互引用来进行数据传递的，那么在开发过程中如果有组件间的数据传递时应该如何解决呢，
-这里我们可以采用 [接口 + 实现] 的方式来解决。
+# 组件间的业务数据交互
+### 1. 组件之间的数据传递
+* 1. 由于主项目与组件，组件与组件之间都是不可以直接使用类的相互引用来进行数据传递的，那么在开发过程中如果有组件间的数据传递时应该如何解决呢，这里我们可以采用 [接口 + 实现] 的方式来解决。
+* 2.在commonlibs基础库里定义组件可以对外提供访问自身数据的抽象方法的 Service。并且提供了一个 ServiceFactory，每个组件中都要提供一个类实现自己对应的 Service 中的抽象方法。在组件加载后，需要创建一个实现类的对象，然后将实现了 Service的类的对象添加到ServiceFactory 中。这样在不同组件交互时就可以通过 ServiceFactory 获取想要调用的组件的接口实现，然后调用其中的特定方法就可以实现组件间的数据传递与方法调用。
+* 3.ServiceFactory 中也会提供所有的 Service 的空实现，在组件单独调试或部分集成调试时避免出现由于实现类对象为空引起的空指针异常。
+* 4.具体实现
+1.其中 service文件夹中定义接口，LoginService 接口中定义了 Login 组件向外提供的数据传递的接口方法，EmptyService 中是 service 中定义的接口的空实现，ServiceFactory 接收组件中实现的接口对象的注册以及向外提供特定组件的接口实现。
+``` java
+  public interface LoginService {
+    /**
+     *是否登录
+     * @return
+     */
+    boolean isLogin();
 
+    /**
+     * 获取登录用户的密码
+     * @return
+     */
+    String getPassword();
+}
 
-3. 组件之间的跳转
+public class EmptyService  implements  LoginService{
+    @Override
+    public boolean isLogin() {
+        return false;
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
+    }
+}
+
+public class ServiceFactory {
+    private LoginService loginService;
+
+    /**
+     * 禁止外部创建 ServiceFactory 对象
+     */
+    private ServiceFactory() {
+    }
+
+    /**
+     * 通过静态内部类方式实现 ServiceFactory 的单例
+     */
+    public static ServiceFactory getInstance() {
+        return Inner.serviceFactory;
+    }
+
+    private static class Inner {
+        private static ServiceFactory serviceFactory = new ServiceFactory();
+    }
+
+    /**
+     * 接收 Login 组件实现的 Service 实例
+     */
+    public void setLoginService(LoginService loginService) {
+        this.loginService = loginService;
+    }
+
+    /**
+     * 返回 Login 组件的 Service 实例
+     */
+    public LoginService getLoginService() {
+        if (loginService == null) {
+            return new EmptyService();
+        } else {
+            return loginService;
+        }
+    }
+}
+```
+2. 在login模块中实现接口
+``` java
+public class AccountService implements LoginService {
+    private boolean isLogin;
+    private String password;
+
+    public AccountService(boolean isLogin,String password){
+        this.isLogin = isLogin;
+        this.password = password;
+    }
+    @Override
+    public boolean isLogin() {
+        return isLogin;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+}
+
+```
+3. 新建一个Utils类用来存储登录数据
+``` java
+/**
+ * 存储登录数据
+ */
+public class LoginUtils {
+    static boolean isLogin = false;
+    static String password = "123456";
+
+}
+```
+4. 实现一下登录操作
+``` java
+      findViewById(R.id.login).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LoginUtils.isLogin = true;
+                ServiceFactory.getInstance().setLoginService(new AccountService(true,LoginUtils.password));
+                Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+            }
+        });
+```
+5. 分享模块获取登录信息
+``` java
+      findViewById(R.id.share).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ServiceFactory.getInstance().getLoginService().isLogin()){
+                    Toast.makeText(ShareActivity.this,"分享成功！",Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(ShareActivity.this,"分享失败，请先登录！",Toast.LENGTH_SHORT).show();
+            }
+            }
+        });
+```
+
+#### 2. 组件之间的跳转
+
 
 
 

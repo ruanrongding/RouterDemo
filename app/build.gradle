@@ -46,7 +46,7 @@ dependencies {
     androidTestImplementation rootProject.ext.dependencies["espressoCore"]
 
     //将各个组件集成到主app中
-    if(is_Module.toBoolean()){
+    if(!is_Module.toBoolean()){
           implementation project(':login')
           implementation project(':share')
     }
