@@ -21,6 +21,8 @@
 
 分别在项目中创建项目组件login, share,commonlibs,app等四个模块，其中commmonlibs是公用类库。login，share,app每个模块目前都可以单独运行
 
+  ![项目结构图](https://seikim.com/i/2022/07/19/n861rf.png)
+
 #### 2.统一Gradle版本号
 
 **每一个模块都是一个application，所以每个模块都会有一个build.gradle，各个模块里面的配置不同，我们需要重新统一Gradle**
@@ -130,6 +132,9 @@ if(is_Module.toBoolean()){
 
 #### 4.AndroidManifest的切换
 1. 在组件模块里的main文件里新建manifest文件夹
+
+   ![config](https://seikim.com/i/2022/07/19/naai9o.png)
+
 2. 重写一个AndroidManifest.xml文件，集成模式下，业务组件的表单是绝对不能拥有自己的 Application 和 launch 的 
 Activity的，也不能声明APP名称、图标等属性，总之app壳工程有的属性，业务组件都不能有，在这个表单中只声明了应用的主题，
 而且这个主题还是跟app壳工程中的主题是一致的
@@ -162,7 +167,13 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 #### 5.Application切换
 每个模块在运行时都会有自己的application，而在组件化开发过程中，我们的主模块只能有一个application，但在单独运行时又需要自己的application这里就需要配置一下。
 1. 在业务模块添加新文件夹命名module
+
+   ![config](https://obohe.com/i/2022/07/19/nbsgf0.png)
+
 2. 在里面建一个application文件
+
+   ![config](https://obohe.com/i/2022/07/19/nc8qry.png)
+
 3. 并且我们在build.gradle文件里配置module文件夹使其在单独运行时能够运行单独的application
    在配置manifest的语句中添加java.srcDir 'src/main/module'
 ``` java
@@ -204,6 +215,8 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 # 组件间的业务数据交互
 ### 1. 组件之间的数据传递
   由于主项目与组件，组件与组件之间都是不可以直接使用类的相互引用来进行数据传递的，那么在开发过程中如果有组件间的数据传递时应该如何解决呢，这里我们可以采用 [接口 + 实现] 的方式来解决。 在commonlibs基础库里定义组件可以对外提供访问自身数据的抽象方法的 Service。并且提供了一个 ServiceFactory，每个组件中都要提供一个类实现自己对应的 Service 中的抽象方法。在组件加载后，需要创建一个实现类的对象，然后将实现了 Service的类的对象添加到ServiceFactory 中。这样在不同组件交互时就可以通过 ServiceFactory 获取想要调用的组件的接口实现，然后调用其中的特定方法就可以实现组件间的数据传递与方法调用。 ServiceFactory 中也会提供所有的 Service 的空实现，在组件单独调试或部分集成调试时避免出现由于实现类对象为空引起的空指针异常。 
+
+
 **具体实现**
 1.其中 service文件夹中定义接口，LoginService 接口中定义了 Login 组件向外提供的数据传递的接口方法，EmptyService 中是 service 中定义的接口的空实现，ServiceFactory 接收组件中实现的接口对象的注册以及向外提供特定组件的接口实现。
 ``` java
