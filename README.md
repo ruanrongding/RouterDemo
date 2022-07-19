@@ -10,10 +10,10 @@
 
 ### 2.为什么要用组件化
 
-**编译速度**：    可以但需测试单一模块，极大提高了开发速度
-**超级解耦**：    极度降低了模块间的耦合，便于后期的维护和更新
-**功能重用**：    某一块的功能在另外的组件化项目中使用只需要单独依赖这一模块即可
-**便于团队开发**： 组件化架构是团队开发必然会选择的一种开发方式,它能有效的使团队更好的协作
+1. **编译速度**：    可以但需测试单一模块，极大提高了开发速度
+2. **超级解耦**：    极度降低了模块间的耦合，便于后期的维护和更新
+3. **功能重用**：    某一块的功能在另外的组件化项目中使用只需要单独依赖这一模块即可
+4. **便于团队开发**： 组件化架构是团队开发必然会选择的一种开发方式,它能有效的使团队更好的协作
 
 ###  3.开始搭建组件化项目
 
@@ -126,8 +126,77 @@ if(is_Module.toBoolean()){
 ```
 
 #### 4.AndroidManifest的切换
+1. 在组件模块里的main文件里新建manifest文件夹
+2. 重写一个AndroidManifest.xml文件，集成模式下，业务组件的表单是绝对不能拥有自己的 Application 和 launch 的 
+Activity的，也不能声明APP名称、图标等属性，总之app壳工程有的属性，业务组件都不能有，在这个表单中只声明了应用的主题，
+而且这个主题还是跟app壳工程中的主题是一致的
+``` java
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.login">
 
+    <application
+        android:theme="@style/Theme.RouterDemo">
+        <activity android:name=".LoginActivity">
+        </activity>
+    </application>
+
+</manifest>
+```
+3. 我们还要使其在不同的模式下加载不同的AndroidManifest只需在各模块的build.gradle里添加更改语句
+``` java
+ // 定义集成模式下和组件模式下manifest文件的相关配置
+    sourceSets {
+        main {
+            if (is_Module.toBoolean()) {
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+            } else {
+                manifest.srcFile 'src/main/manifest/AndroidManifest.xml'
+            }
+        }
+    }
+```
 #### 5.Application切换
+每个模块在运行时都会有自己的application，而在组件化开发过程中，我们的主模块只能有一个application，但在单独运行时又需要自己的application这里就需要配置一下。
+1. 在业务模块添加新文件夹命名module
+2. 在里面建一个application文件
+3. 并且我们在build.gradle文件里配置module文件夹使其在单独运行时能够运行单独的application
+   在配置manifest的语句中添加java.srcDir 'src/main/module'
+``` java
+ // 定义集成模式下和组件模式下manifest文件的相关配置
+    sourceSets {
+        main {
+            if (is_Module.toBoolean()) {
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+                java.srcDir('src/main/moudle')
+            } else {
+                manifest.srcFile 'src/main/manifest/AndroidManifest.xml'
+            }
+        }
+    }
+```
+4. 我们可以在commonlibs基础层内新建application，用于加载一些数据的初始化
+``` java
+ public class BaseApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.e("TAG","BaseApplication onCreate()");
+    }
+    
+}
+```
+5. 在业务模块内module里重写该模块的application
+``` java
+ public class LoginApplication extends BaseApplication {
+    @Override
+    public void onCreate() {
+        Log.e("TAG","LoginApplication onCreate()");
+        super.onCreate();
+    }
+}
+
+```
 
 #### 6.组件间的业务跳转交互
 
