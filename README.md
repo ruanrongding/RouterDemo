@@ -24,8 +24,8 @@
 #### 2.统一Gradle版本号
 
 **每一个模块都是一个application，所以每个模块都会有一个build.gradle，各个模块里面的配置不同，我们需要重新统一Gradle**
-1.在主模块创建config.gradle
-2.在config.gradle里去添加一些版本号
+1. 在主模块创建config.gradle
+2. 在config.gradle里去添加一些版本号
 ``` java
 // 统一Gradle版本号
 ext{
@@ -49,7 +49,44 @@ ext{
     ]
 }
 ``` 
-3.在主模块的build.gradle里添加
+3. 在主模块的build.gradle里添加
+``` java
+//引用config.gradle
+apply from: "config.gradle"
+``` 
+4. 在各模块中去引用这些版本号,如commonlibs中的build.gradle
+``` java
+android {
+    
+    compileSdk rootProject.ext.android["compileSdkVersion"]
+    defaultConfig {
+        minSdk rootProject.ext.android["minSdkVersion"]
+        targetSdk rootProject.ext.android["targetSdkVersion"]
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation rootProject.ext.dependencies["appcompat"]
+    implementation rootProject.ext.dependencies["material"]
+    
+    testImplementation rootProject.ext.dependencies["junit"]
+    androidTestImplementation rootProject.ext.dependencies["testExtJunit"]
+    androidTestImplementation rootProject.ext.dependencies["espressoCore"]
+
+}
+``` 
    
 #### 3.组件模式和集成模式转换
 

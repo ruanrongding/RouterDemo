@@ -1,19 +1,15 @@
 plugins {
     id 'com.android.library'
 }
-
 android {
+
     compileSdk rootProject.ext.android["compileSdkVersion"]
-
     defaultConfig {
-
         minSdk rootProject.ext.android["minSdkVersion"]
         targetSdk rootProject.ext.android["targetSdkVersion"]
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -27,10 +23,8 @@ android {
 }
 
 dependencies {
-
     implementation rootProject.ext.dependencies["appcompat"]
     implementation rootProject.ext.dependencies["material"]
-
 
     testImplementation rootProject.ext.dependencies["junit"]
     androidTestImplementation rootProject.ext.dependencies["testExtJunit"]
