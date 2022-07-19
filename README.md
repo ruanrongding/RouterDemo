@@ -354,7 +354,26 @@ public class LoginUtils {
 ```
 
 #### 2. 组件之间的跳转
+
 **可以采用里巴巴的开源库ARouter来实现跳转功能,ARouter一个用于帮助 Android App 进行组件化改造的框架 —— 支持模块间的路由、通信、解耦**
+
+**ARouter的工作原理**
+
+在代码里加入的@Route注解，会在编译时期通过apt生成一些存储path和activityClass映射关系的类文件，然后app进程启动的时候会拿到这些类文件，把保存这些映射关系的数据读到内存里(保存在map里)，然后在进行路由跳转的时候，通过build()方法传入要到达页面的路由地址，ARouter会通过它自己存储的路由表找到路由地址对应的Activity.class(activity.class = map.get(path))，然后new Intent()，当调用ARouter的withString()方法它的内部会调用intent.putExtra(String name, String value)，调用navigation()方法，它的内部会调用startActivity(intent)进行跳转，这样便可以实现两个相互没有依赖的module顺利的启动对方的Activity了。
+
+**ARouter简介**
+
+ARouter 是阿里开源的一款帮助 Android App 进行组件化改造的路由框架，是 Android 平台中对页面、服务提供路由功能的中间件，可以实现在不同模块的 Activity 之间跳转。
+
+ARouter 的特点是灵活性强以及帮助项目解耦。
+
+1. **灵活性强**
+
+* 在一些复杂的业务场景下，很多功能都是运营人员动态配置的。比如电商系统需要下发一个活动页面，App 事先不知道该活动具体的目标页面，但如果提前做好了页面映射，就可以自由配置了。
+2. **项目解耦**
+
+* 随着业务量增长，App 项目代码会越来越多，开发人员之间的协作也会变得越来越复杂，而解决这个问题的方案一般就是插件化和组件化。
+* 插件化和组件化的前提是解耦，解耦后还要保持页面之间的依赖关系，这时就需要一套路由机制了。
 
 
 
