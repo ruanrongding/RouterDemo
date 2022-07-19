@@ -89,6 +89,41 @@ dependencies {
 ``` 
    
 #### 3.组件模式和集成模式转换
+1. 在主模块gradle.properties里添加布尔类型选项。
+``` java
+//ture 表示当模块login,share 为可独立运行的App,false表示login,share等模块为组件，将集成到app中
+is_Module=false
+``` 
+2. 在各个模块的build.gradle里添加更改语句
+``` java
+//组件模式和集成模式的转换
+if(is_Module.toBoolean()){
+    apply plugin: 'com.android.application'
+}else{
+    apply plugin: 'com.android.library'
+}
+``` 
+3. 每个模块的applicationId也需要处理
+``` java
+  //当我们将is_module改为false时，再次运行编译器我们的模块都不能单独运行了
+  //在login模块的build.gradle文件中修改
+  if(is_Module.toBoolean()){
+            applicationId "com.example.login"
+        }
+        
+  //在share模块的build.gradle文件中修改 
+  if(is_Module.toBoolean()){
+            applicationId "com.example.share"
+        }
+``` 
+4. 在app模块中添加判断依赖就可以在集成模式下将各模块添加到app主模块中
+``` java
+ //将各个组件集成到主app中
+    if(is_Module.toBoolean()){
+          implementation project(':login')
+          implementation project(':share')
+    }
+```
 
 #### 4.AndroidManifest的切换
 
