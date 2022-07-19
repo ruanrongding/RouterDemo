@@ -25,7 +25,7 @@
 
 **每一个模块都是一个application，所以每个模块都会有一个build.gradle，各个模块里面的配置不同，我们需要重新统一Gradle**
 1. 在主模块创建config.gradle
- ![创建config版本控制文件](../img/g2.png)
+<p><a href="img/g2.png"/> </p>
 2. 在config.gradle里去添加一些版本号
 ``` java
 // 统一Gradle版本号
