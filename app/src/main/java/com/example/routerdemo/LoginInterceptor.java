@@ -1,5 +1,7 @@
 package com.example.routerdemo;
+
 import android.content.Context;
+
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.annotation.Interceptor;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
@@ -21,7 +23,7 @@ public class LoginInterceptor implements IInterceptor {
                  System.out.println("没有登录去登录");
                  ARouter.getInstance().build("/login/LoginActivity").navigation();
                  //没有登录抛出异常
-//                callback.onInterrupt(new RuntimeException());
+                callback.onInterrupt(new RuntimeException());
              }
 
          }
