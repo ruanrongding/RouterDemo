@@ -499,6 +499,37 @@ public class LoginInterceptor implements IInterceptor {
 
 #### 1. 注解处理APT
 
+添加注解@Route(path = "/login/LoginActivity")后,ARouter是使用arouter-compiler来处理注解，自动生成代码，在此基础上实现路由跳转的功能。
+
+ARouter APT自动生成三个class文件（位于login/build/generated/ap_generated_sources/debug/out/目录下）
+
+![项目结构图](https://obohe.com/i/2022/07/20/m7qdv6.png)
+
+这三个class分别实现了IRouteGroup、IRouteRoot、IProviderGroup，且类名都以ARouter$开头，都位于com.alibaba.android.arouter.routes包下：
+``` java
+public class ARouter$$Group$$login implements IRouteGroup {
+  @Override
+  public void loadInto(Map<String, RouteMeta> atlas) {
+    atlas.put("/login/LoginActivity", RouteMeta.build(RouteType.ACTIVITY, LoginActivity.class, "/login/loginactivity", "login", null, -1, -2147483648));
+  }
+}
+
+public class ARouter$$Providers$$login implements IProviderGroup {
+  @Override
+  public void loadInto(Map<String, RouteMeta> providers) {
+  }
+}
+
+public class ARouter$$Root$$login implements IRouteRoot {
+  @Override
+  public void loadInto(Map<String, Class<? extends IRouteGroup>> routes) {
+    routes.put("login", ARouter$$Group$$login.class);
+  }
+}
+```
+
+自动生成的代码有什么用途？
+
 
 #### 2. 初始化SDK
 
