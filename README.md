@@ -623,6 +623,7 @@ public class LogisticsCenter {
     }
 }
 ```
+
 我们可以看到，首先是去获取到所有的app里的由ARouter注解生成的类的类名，他们的统一特点就是在同一个包下，包名为：
 com.alibaba.android.arouter.routes
 然后就是循环遍历这些类，也就是刚才我们说的那三种类。在这里，有一个
@@ -679,6 +680,7 @@ public final class ARouter {
     }
 }
 ```
+
 ARouter.getInstance()的单例模式的实际调用也是在_ARouter.getInstance()中， build(String path)、navigation()等代码实际实现都在_ARouter中
 
 
@@ -755,7 +757,9 @@ public class RouteMeta {
     private Map<String, Autowired> injectConfig;  // Cache inject config.
 }
 ```
+
 ARouter.getInstance().build("/login/LoginActivity")返回Postcard对象，接下来继续分析Postcard.navigation()：
+
 ``` java
 public final class Postcard extends RouteMeta {
     public Object navigation() {
@@ -768,7 +772,9 @@ public final class Postcard extends RouteMeta {
     }
 }
 ```
+
 接下来继续分析_ARouter：
+
 ``` java
 final class _ARouter {
     /**
@@ -881,7 +887,9 @@ final class _ARouter {
     }
 }
 ```
+
 再看LogisticsCenter.completion()的主要工作：
+
 ``` java
 public class LogisticsCenter {
     public synchronized static void completion(Postcard postcard) {
@@ -949,7 +957,9 @@ public class LogisticsCenter {
     }
 }
 ```
+
 LogisticsCenter是如何知道path="/login/LoginActivity"的Postcard在补全信息时，其对应的RouteType是Activity，对应的类是LoginActivity.class呢，在注解自动生成的代码，就可以看出来，APT处理过程中就会生成其对应信息，然后在LogisticsCenter.init()会将这些信息记录下来：
+
 ``` java
 public class ARouter$$Group$$first implements IRouteGroup {
     @Override
@@ -959,6 +969,7 @@ public class ARouter$$Group$$first implements IRouteGroup {
     }
 }
 ```
+
 最后总结下ARouter路由的调用过程
 
 ![config](https://obohe.com/i/2022/07/20/nin56i.png)
