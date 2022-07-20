@@ -493,6 +493,59 @@ public class LoginInterceptor implements IInterceptor {
 ```
 
 
+### ARouter源码分析
+
+ ARouter是通过三步（添加注解、初始化SDK、发起路由）来实现的
+
+#### 1. 注解处理APT
+
+
+#### 2. 初始化SDK
+
+``` java
+        ARouter.openLog();
+        ARouter.openDebug();
+        ARouter.init(getApplication());
+```
+上面是ARouter初始化，我们可以看看init()里面做了什么事情
+``` java
+     public static void init(Application application) {
+        if (!hasInit) {
+            logger = _ARouter.logger;
+            _ARouter.logger.info(Consts.TAG, "ARouter init start.");
+            hasInit = _ARouter.init(application);
+
+            if (hasInit) {
+                _ARouter.afterInit();
+            }
+
+            _ARouter.logger.info(Consts.TAG, "ARouter init over.");
+        }
+    }
+```
+可以看到最终调用的都是在_ARouter这个类里面
+``` java
+  protected static synchronized boolean init(Application application) {
+        mContext = application;
+        LogisticsCenter.init(mContext, executor);
+        logger.info(Consts.TAG, "ARouter init success!");
+        hasInit = true;
+        mHandler = new Handler(Looper.getMainLooper());
+
+        return true;
+    }
+```
+核心就是LogisticsCenter.init()这个方法
+
+
+``` java
+
+```
+
+#### 3. 发起路由
+
+
+
 
 
 
