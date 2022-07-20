@@ -643,9 +643,11 @@ class Warehouse {
     static Map<Integer, Class<? extends IInterceptor>> interceptorsIndex = new UniqueKeyTreeMap<>("More than one interceptors use same priority [%s]");
     static List<IInterceptor> interceptors = new ArrayList<>();
 }
-结合前面自动生成的代码来分析，Warehouse.groupsIndex中存放的key就是@Route(path = "/login/LoginActivity")注解中所指定的path，value就是class：
 
 ```
+
+结合前面自动生成的代码来分析，Warehouse.groupsIndex中存放的key就是@Route(path = "/login/LoginActivity")注解中所指定的path，value就是class：
+
 
 #### 3. 发起路由
 
