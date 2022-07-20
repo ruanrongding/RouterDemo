@@ -445,55 +445,8 @@ ARouter.getInstance().build("/login/LoginActivity"")
             .navigation();
 ```
 
-### ARouter中拦截器IInterceptor的应用
 
-ARouter提供了IInterceptor接口和@Interceptor注解，供开发者实现自定义拦截器。IInterceptor拦截的方法在process()中，在方法中调用callback.onInterrupt()则拦截跳转，调用callback.onContinue(）则继续跳转。
-
-**@Interceptor**
-
-  ARouter的@Interceptor注解中可以设置Inteceptor的优先级。判断name和age是否为空的Interceptor如下：
-
-``` java
-// 比较经典的应用就是在跳转过程中处理登陆事件，这样就不需要在目标页重复做登陆检查
-// 拦截器会在跳转之间执行，多个拦截器会按优先级顺序依次执行 priority值越大优先级越高
-@Interceptor(priority = 1,name = "登录状态拦截器")
-public class LoginInterceptor implements IInterceptor {
-    @Override
-    public void process(Postcard postcard, InterceptorCallback callback) {
-    callback.onContinue(postcard); // 处理完成，交还控制权
-     // callback.onInterrupt(new RuntimeException("我觉得有点异常"));      // 觉得有问题，中断路由流程
-    // 以上两种至少需要调用其中一种，否则不会继续路由
-    }
-    @Override
-    public void init(Context context) {
-    }
-}
-```
-
-**NavigationCallback**
-
-  在实现了拦截器后，在ARouter执行跳转时传入NavigationCallback参数，就可以收到拦截器是否拦截的回调：
-
-``` java
- 
-    //拦截器回调
-    private NavigationCallback navigationCallback = new NavigationCallback() {
-        @Override
-        public void onFound(Postcard postcard) { }
-        @Override
-        public void onLost(Postcard postcard) { }
-        @Override
-        public void onArrival(Postcard postcard) { }
-        @Override
-        public void onInterrupt(Postcard postcard) {
-            //如果被拦截器拦截之后会收到onInterrupt()回调
-            System.out.println("navigationCallback onInterrupt():"+postcard.getPath());
-        }
-    };
-```
-
-
-### ARouter源码分析
+### ARouter基本用法源码分析
 
  ARouter是通过三步（添加注解、初始化SDK、发起路由）来实现的
 
@@ -655,8 +608,6 @@ class Warehouse {
 ``` java
 ARouter.getInstance().build("/login/LoginActivity").navigation();
 ```
-
-最终调用代码则是_ARouter类里面的_navigation方法：
 
 我们先看ARouter的源码实现
 ``` java
@@ -978,8 +929,298 @@ public class ARouter$$Group$$first implements IRouteGroup {
 ![config](https://obohe.com/i/2022/07/20/nin56i.png)
 
 
+### ARouter中拦截器IInterceptor的基本实现
 
+ARouter提供了IInterceptor接口和@Interceptor注解，供开发者实现自定义拦截器。IInterceptor拦截的方法在process()中，在方法中调用callback.onInterrupt()则拦截跳转，调用callback.onContinue(）则继续跳转。
 
+**@Interceptor**
+
+ARouter的@Interceptor注解中可以设置Inteceptor的优先级。判断name和age是否为空的Interceptor如下：
+
+``` java
+// 比较经典的应用就是在跳转过程中处理登陆事件，这样就不需要在目标页重复做登陆检查
+// 拦截器会在跳转之间执行，多个拦截器会按优先级顺序依次执行 priority值越大优先级越高
+@Interceptor(priority = 1,name = "登录状态拦截器")
+public class LoginInterceptor implements IInterceptor {
+    @Override
+    public void process(Postcard postcard, InterceptorCallback callback) {
+    callback.onContinue(postcard); // 处理完成，交还控制权
+     // callback.onInterrupt(new RuntimeException("我觉得有点异常"));      // 觉得有问题，中断路由流程
+    // 以上两种至少需要调用其中一种，否则不会继续路由
+    }
+    @Override
+    public void init(Context context) {
+    }
+}
+```
+
+**NavigationCallback**
+
+在实现了拦截器后，在ARouter执行跳转时传入NavigationCallback参数，就可以收到拦截器是否拦截的回调：
+
+``` java
+ 
+    //拦截器回调
+    private NavigationCallback navigationCallback = new NavigationCallback() {
+        @Override
+        public void onFound(Postcard postcard) { }
+        @Override
+        public void onLost(Postcard postcard) { }
+        @Override
+        public void onArrival(Postcard postcard) { }
+        @Override
+        public void onInterrupt(Postcard postcard) {
+            //如果被拦截器拦截之后会收到onInterrupt()回调
+            System.out.println("navigationCallback onInterrupt():"+postcard.getPath());
+        }
+    };
+```
+
+### ARouter中拦截器IInterceptor源码分析
+
+#### 1.注解处理@Interceptor
+
+对于@Interceptor注解，ARouter会自动在如下位置生成代码：
+
+![项目结构图](https://seikim.com/i/2022/07/20/o141z1.png)
+
+自动生成的代码如下：
+``` java
+public class ARouter$$Interceptors$$app implements IInterceptorGroup {
+  @Override
+  public void loadInto(Map<Integer, Class<? extends IInterceptor>> interceptors) {
+    interceptors.put(1, LoginInterceptor.class);
+  }
+}
+```
+
+#### 2.初始化SDK
+
+对比ARouter基本用法的初始化过程。对于自定义拦截器的处理不同之处在于，对自定义拦截器以UniqueKeyTreeMap的形式存放在Warehouse.interceptorsIndex中。
+
+``` java
+public class LogisticsCenter {
+    private static Context mContext;
+    static ThreadPoolExecutor executor;
+    private static boolean registerByPlugin;
+
+    public synchronized static void init(Context context, ThreadPoolExecutor tpe) throws HandlerException {
+        if (registerByPlugin) {
+            logger.info(TAG, "Load router map by arouter-auto-register plugin.");
+        } else {
+            // ..省略代码
+            // 获取routeMap后,根据路由类型注册到对应的分组里
+            for (String className : routerMap) {
+                if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_ROOT)) {
+                    // 1.加载root，类名以SUFFIX_ROOT(com.alibaba.android.arouter.routes.ARouter$$Root)开头
+                    // 以<String,Class>添加到HashMap(Warehouse.groupsIndex)中
+                    ((IRouteRoot) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.groupsIndex);
+                } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_INTERCEPTORS)) {
+                    // 2.加载interceptorMeta，类名以SUFFIX_INTERCEPTORS(com.alibaba.android.arouter.routes.ARouter$$Interceptors)开头
+                    // 以<String,IInterceptorGroup>添加到UniqueKeyTreeMap(Warehouse.interceptorsIndex)中;以树形结构实现顺序拦截
+                    ((IInterceptorGroup) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.interceptorsIndex);
+                } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_PROVIDERS)) {
+                    // 3.加载providerIndex，类名以SUFFIX_PROVIDERS(com.alibaba.android.arouter.routes.ARouter$$Providers)开头
+                    // 以<String,IProviderGroup>添加到HashMap(Warehouse.providersIndex)中
+                    ((IProviderGroup) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.providersIndex);
+                }
+            }
+        }
+    }
+}
+```
+此外，在ARouter的初始化过程中，本次需要额外关注下afterInit()方法，里面返回了InterceptorService的单实例对象。
+
+``` java
+/**
+ * ARouter门面
+ */
+public final class ARouter {
+    private volatile static boolean hasInit = false;
+    private static InterceptorService interceptorService;
+
+    public static void init(Application application) {
+        if (!hasInit) {
+            // ARouter是门面模式,代码实现在_ARouter中,下面接着分析_ARouter
+            hasInit = _ARouter.init(application);
+            if (hasInit) {
+                _ARouter.afterInit();
+            }
+        }
+    }
+    
+    static void afterInit() {
+        interceptorService = (InterceptorService) ARouter.getInstance().build("/arouter/service/interceptor").navigation();
+    }
+}
+```
+
+#### 3.初始化InterceptorService
+
+InterceptorService是ARouter提供的拦截服务，用来管理开发者自定义的拦截器。
+
+InterceptorService继承了IProvider,在获取InterceptorService实例时会执行其init方法：
+
+``` java
+@Route(path = "/arouter/service/interceptor")
+public class InterceptorServiceImpl implements InterceptorService {
+    private static boolean interceptorHasInit;
+    private static final Object interceptorInitLock = new Object();
+
+    @Override
+    public void init(final Context context) {
+        // 在子线程初始化避免anr
+        LogisticsCenter.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (MapUtils.isNotEmpty(Warehouse.interceptorsIndex)) {
+                    // 初始化工作比较简单：
+                    // 将Warehouse.interceptorsIndex内的拦截器类分别初始化
+                    // 并将实例对象放入Warehouse.interceptors中
+                    for (Map.Entry<Integer, Class<? extends IInterceptor>> entry : Warehouse.interceptorsIndex.entrySet()) {
+                        Class<? extends IInterceptor> interceptorClass = entry.getValue();
+                        try {
+                            IInterceptor iInterceptor = interceptorClass.getConstructor().newInstance();
+                            iInterceptor.init(context);
+                            Warehouse.interceptors.add(iInterceptor);
+                        } catch (Exception ex) {
+                            throw new HandlerException(TAG + "ARouter init interceptor error! name = [" + interceptorClass.getName() + "], reason = [" + ex.getMessage() + "]");
+                        }
+                    }
+                    interceptorHasInit = true;
+                    synchronized (interceptorInitLock) {
+                        interceptorInitLock.notifyAll();
+                    }
+                }
+            }
+        });
+    }
+
+    private static void checkInterceptorsInitStatus() {
+        synchronized (interceptorInitLock) {
+            while (!interceptorHasInit) {
+                try {
+                    interceptorInitLock.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    throw new HandlerException(TAG + "Interceptor init cost too much time error! reason = [" + e.getMessage() + "]");
+                }
+            }
+        }
+    }
+}
+```
+
+#### 4.navigation拦截跳转
+
+根据以上分析，ARouter初始化的过程中将自定义拦截器类记录到了Warehouse.interceptorsInde中，另外初始化了总拦截器的实例对象InterceptorServiceImpl。下面继续分析在跳转过程中是如何调用到InterceptorServiceImpl中的。
+
+``` java
+final class _ARouter {
+    /**
+     * 执行路由流程，主要工作包括：预处理、完善路由信息、拦截、继续执行路由流程
+     */
+    protected Object navigation(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        // ...省略部分代码
+        // Postcard是否是绿色通道，是则继续执行_navigation；
+        // 只有RouteType是PROVIDER或FRAGMENT的Postcard才不拦截
+        // 不是则执行interceptorService判断是否有拦截流程，本次暂不分析拦截流程；
+        if (!postcard.isGreenChannel()) {
+            // 调用到了总拦截器InterceptorServiceImpl中
+            interceptorService.doInterceptions(postcard, new InterceptorCallback() {
+                @Override
+                public void onContinue(Postcard postcard) {
+                    _navigation(postcard, requestCode, callback);
+                }
+                
+                @Override
+                public void onInterrupt(Throwable exception) {
+                    if (null != callback) {
+                        callback.onInterrupt(postcard);
+                    }
+                }
+            });
+        } else {
+            // 4.继续执行_navigation流程
+            return _navigation(postcard, requestCode, callback);
+        }
+        return null;
+    }
+}
+```
+
+#### 5.InterceptorServiceImpl
+
+InterceptorService在独立线程中执行了顺序拦截的过程，独立线程是为了避免拦截耗时过长导致anr，源码实现如下：
+
+``` java
+@Route(path = "/arouter/service/interceptor")
+public class InterceptorServiceImpl implements InterceptorService {
+
+    @Override
+    public void doInterceptions(final Postcard postcard, final InterceptorCallback callback) {
+        if (MapUtils.isNotEmpty(Warehouse.interceptorsIndex)) {
+            checkInterceptorsInitStatus();
+            if (!interceptorHasInit) {
+                callback.onInterrupt(new HandlerException("Interceptors initialization takes too much time."));
+                return;
+            }
+            LogisticsCenter.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    CancelableCountDownLatch interceptorCounter = new CancelableCountDownLatch(Warehouse.interceptors.size());
+                    try {
+                        _execute(0, interceptorCounter, postcard);
+                        // 自定义的Interceptors中某个拦截器可能会在其他线程执行,这里需要等待至超时
+                        interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
+                        if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
+                            // 如果自定义的Interceptors中某个拦截器onContinue()和onInterrupt()都没执行,则CountDownLatch>0,这里返回拦截回调
+                            callback.onInterrupt(new HandlerException("The interceptor processing timed out."));
+                        } else if (null != postcard.getTag()) {    // Maybe some exception in the tag.
+                            // 如果自定义的Interceptors中某个拦截器执行了onInterrupt(),这里返回拦截回调
+                            callback.onInterrupt((Throwable) postcard.getTag());
+                        } else {
+                            // 其他情况下,继续跳转逻辑
+                            callback.onContinue(postcard);
+                        }
+                    } catch (Exception e) {
+                        // await()超时则会抛异常
+                        callback.onInterrupt(e);
+                    }
+                }
+            });
+        } else {
+            callback.onContinue(postcard);
+        }
+    }
+
+    /**
+     * 递归执行自定义拦截器的拦截逻辑；
+     * 拦截器执行结束后onContinue()或onInterrupt()都会使CountDownLatch减一
+     */
+    private static void _execute(final int index, final CancelableCountDownLatch counter, final Postcard postcard) {
+        if (index < Warehouse.interceptors.size()) {
+            // 根据index递增,按顺序执行自定义拦截器
+            IInterceptor iInterceptor = Warehouse.interceptors.get(index);
+            iInterceptor.process(postcard, new InterceptorCallback() {
+                @Override
+                public void onContinue(Postcard postcard) {
+                    counter.countDown();
+                    _execute(index + 1, counter, postcard);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
+                }
+
+                @Override
+                public void onInterrupt(Throwable exception) {
+                    postcard.setTag(null == exception ? new HandlerException("No message.") : exception);    // save the exception message for backup.
+                    counter.cancel();
+                }
+            });
+        }
+    }
+}
+```
+
+``` java
+```
 
 
 
