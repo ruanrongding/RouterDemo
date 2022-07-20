@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
+
     //拦截器回调
     private NavigationCallback navigationCallback = new NavigationCallback() {
         @Override
@@ -48,9 +50,7 @@ public class MainActivity extends AppCompatActivity {
         public void onInterrupt(Postcard postcard) {
             //如果被拦截器拦截之后会收到onInterrupt()回调
             System.out.println("navigationCallback onInterrupt():"+postcard.getPath());
-            if(postcard.getPath().equals("/share/ShareActivity")){
-                ARouter.getInstance().build("/login/LoginActivity").navigation();
-            }
+
         }
     };
 }

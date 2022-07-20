@@ -388,7 +388,8 @@ ARouter 的特点是灵活性强以及帮助项目解耦。
 ### 基本功能
 1. 添加依赖和配置
 ``` java
-     android {
+
+ android {
     defaultConfig {
         //app,loin,share ,commonlibs等module中的build.gradle文件中都要添加
         javaCompileOptions {
@@ -439,6 +440,53 @@ ARouter.getInstance().build("/login/LoginActivity"")
             .withString("key3", "888")
             .withObject("key4", new Test("Jack", "Rose"))
             .navigation();
+```
+
+### ARouter中拦截器IInterceptor的应用
+
+ARouter提供了IInterceptor接口和@Interceptor注解，供开发者实现自定义拦截器。IInterceptor拦截的方法在process()中，在方法中调用callback.onInterrupt()则拦截跳转，调用callback.onContinue(）则继续跳转。
+
+**@Interceptor**
+
+  ARouter的@Interceptor注解中可以设置Inteceptor的优先级。判断name和age是否为空的Interceptor如下：
+
+``` java
+// 比较经典的应用就是在跳转过程中处理登陆事件，这样就不需要在目标页重复做登陆检查
+// 拦截器会在跳转之间执行，多个拦截器会按优先级顺序依次执行 priority值越大优先级越高
+@Interceptor(priority = 1,name = "登录状态拦截器")
+public class LoginInterceptor implements IInterceptor {
+    @Override
+    public void process(Postcard postcard, InterceptorCallback callback) {
+    callback.onContinue(postcard); // 处理完成，交还控制权
+     // callback.onInterrupt(new RuntimeException("我觉得有点异常"));      // 觉得有问题，中断路由流程
+    // 以上两种至少需要调用其中一种，否则不会继续路由
+    }
+    @Override
+    public void init(Context context) {
+    }
+}
+```
+
+**NavigationCallback**
+
+  在实现了拦截器后，在ARouter执行跳转时传入NavigationCallback参数，就可以收到拦截器是否拦截的回调：
+
+``` java
+ 
+    //拦截器回调
+    private NavigationCallback navigationCallback = new NavigationCallback() {
+        @Override
+        public void onFound(Postcard postcard) { }
+        @Override
+        public void onLost(Postcard postcard) { }
+        @Override
+        public void onArrival(Postcard postcard) { }
+        @Override
+        public void onInterrupt(Postcard postcard) {
+            //如果被拦截器拦截之后会收到onInterrupt()回调
+            System.out.println("navigationCallback onInterrupt():"+postcard.getPath());
+        }
+    };
 ```
 
 
