@@ -361,8 +361,6 @@ public class LoginUtils {
 
 
 
-
-
 # ARouter
 
 在代码里加入的@Route注解，会在编译时期通过apt生成一些存储path和activityClass映射关系的类文件，然后app进程启动的时候会拿到这些类文件，把保存这些映射关系的数据读到内存里(保存在map里)，然后在进行路由跳转的时候，通过build()方法传入要到达页面的路由地址，ARouter会通过它自己存储的路由表找到路由地址对应的Activity.class(activity.class = map.get(path))，然后new Intent()，当调用ARouter的withString()方法它的内部会调用intent.putExtra(String name, String value)，调用navigation()方法，它的内部会调用startActivity(intent)进行跳转，这样便可以实现两个相互没有依赖的module顺利的启动对方的Activity了。
@@ -480,8 +478,6 @@ public class ARouter$$Root$$login implements IRouteRoot {
   }
 }
 ```
-
-自动生成的代码有什么用途？
 
 
 #### 2. 初始化SDK
@@ -934,7 +930,7 @@ public class ARouter$$Group$$first implements IRouteGroup {
 
 #### 1 添加项目依赖和配置导入ARouter
 
-    同上面ARouter的项目配置一样
+同上面ARouter的项目配置一样
 
 #### 2.实现抽象接口服务层
 
@@ -979,9 +975,210 @@ public class RegisterServiceImpl implements RegisterService {
 ``` 
 
 ### ARouter中跨模块API源码分析
+#### 1.注解处理
+同AROuter基本用法一样，ARouter APT自动生成三个class文件（位于login/build/generated/ap_generated_sources/debug/out/目录下）
+
+这三个class分别实现了IRouteGroup、IRouteRoot、IProviderGroup，且类名都以ARouter$开头，都位于com.alibaba.android.arouter.routes包下：
+``` java
+public class ARouter$$Group$$login implements IRouteGroup {
+  @Override
+  public void loadInto(Map<String, RouteMeta> atlas) {
+    atlas.put("/login/LoginActivity", RouteMeta.build(RouteType.ACTIVITY, LoginActivity.class, "/login/loginactivity", "login", null, -1, -2147483648));
+    atlas.put("/login/doRegister", RouteMeta.build(RouteType.PROVIDER, RegisterServiceImpl.class, "/login/doregister", "login", null, -1, -2147483648));
+  }
+}
 
 
+public class ARouter$$Providers$$login implements IProviderGroup {
+  @Override
+  public void loadInto(Map<String, RouteMeta> providers) {
+    providers.put("com.example.commonlibs.service.RegisterService", RouteMeta.build(RouteType.PROVIDER, RegisterServiceImpl.class, "/login/doRegister", "login", null, -1, -2147483648));
+  }
+}
 
+public class ARouter$$Root$$login implements IRouteRoot {
+  @Override
+  public void loadInto(Map<String, Class<? extends IRouteGroup>> routes) {
+    routes.put("login", ARouter$$Group$$login.class);
+  }
+}
+```
+
+**APT自动生成的代码和ARouter基本路由生成代码的区别在于：**
+
+1. IRouteGroup中添加的RouteType类型是RouteType.PROVIDER；
+2. IProviderGroup中新增了往providers中注册的代码；
+
+#### 2.RAouter初始化
+
+SDK初始化的源码与基础ARouter大体类似，不再分析。下面只分析不同的地方LogisticsCenter.init()中，对于模块接口IProvider，以<String,IProviderGroup>添加到HashMap(Warehouse.providersIndex)中：
+
+``` java
+public class LogisticsCenter {
+    private static Context mContext;
+    static ThreadPoolExecutor executor;
+    private static boolean registerByPlugin;
+
+    public synchronized static void init(Context context, ThreadPoolExecutor tpe) throws HandlerException {
+        mContext = context;
+        executor = tpe;
+        //load by plugin first
+        loadRouterMap();
+        if (registerByPlugin) {
+            logger.info(TAG, "Load router map by arouter-auto-register plugin.");
+        } else {
+            // 1.关键代码routeMap
+            Set<String> routerMap;
+            // It will rebuild router map every times when debuggable.
+            // 2.debug模式或者PackageUtils判断本地路由为空或有新版本
+            if (ARouter.debuggable() || PackageUtils.isNewVersion(context)) {
+                // 3.获取ROUTE_ROOT_PAKCAGE(com.alibaba.android.arouter.routes)包名下的所有类
+                // arouter-compiler根据注解自动生成的类都放在com.alibaba.android.arouter.routes包下
+                routerMap = ClassUtils.getFileNameByPackageName(mContext, ROUTE_ROOT_PAKCAGE);
+                // 4.建立routeMap后保存到sp中，下次直接从sp中读取StringSet;逻辑见else分支;
+                if (!routerMap.isEmpty()) {
+                    context.getSharedPreferences(AROUTER_SP_CACHE_KEY, Context.MODE_PRIVATE).edit().putStringSet(AROUTER_SP_KEY_MAP, routerMap).apply();
+                }
+                // 5.更新本地路由的版本号
+                PackageUtils.updateVersion(context);    // Save new version name when router map update finishes.
+            } else {
+                routerMap = new HashSet<>(context.getSharedPreferences(AROUTER_SP_CACHE_KEY, Context.MODE_PRIVATE).getStringSet(AROUTER_SP_KEY_MAP, new HashSet<String>()));
+            }
+            // 6.获取routeMap后,根据路由类型注册到对应的分组里
+            for (String className : routerMap) {
+                if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_ROOT)) {
+                    // 7.加载root，类名以SUFFIX_ROOT(com.alibaba.android.arouter.routes.ARouter$$Root)开头
+                    // 以<String,Class>添加到HashMap(Warehouse.groupsIndex)中
+                    ((IRouteRoot) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.groupsIndex);
+                } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_INTERCEPTORS)) {
+                    // 8.加载interceptorMeta，类名以SUFFIX_INTERCEPTORS(com.alibaba.android.arouter.routes.ARouter$$Interceptors)开头
+                    // 以<String,IInterceptorGroup>添加到UniqueKeyTreeMap(Warehouse.interceptorsIndex)中;以树形结构实现顺序拦截
+                    ((IInterceptorGroup) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.interceptorsIndex);
+                } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_PROVIDERS)) {
+                    // 9.加载providerIndex，类名以SUFFIX_PROVIDERS(com.alibaba.android.arouter.routes.ARouter$$Providers)开头
+                    // 以<String,IProviderGroup>添加到HashMap(Warehouse.providersIndex)中
+                    ((IProviderGroup) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.providersIndex);
+                }
+            }
+        }
+    }
+}
+``` 
+
+#### 3.获取服务
+
+1. 继续分析_ARouter.getInstance().build()获取服务时的源码，方法返回Postcard对象，该对象表示一次路由操作所需的全部信息，与前面相比不同的地方在于Postcard对象的RouteType是PROVIDER，在LogisticsCenter完善Postcard的信息时，对于PROVIDER的Postcard对象，会把IProvider对应的实现层实例添加到Postcard对象中：
+
+``` java
+public class LogisticsCenter {
+    public synchronized static void completion(Postcard postcard) {
+        // 1.从Warehouse.routes中查找Postcard的path所对应的RouteMeta
+        RouteMeta routeMeta = Warehouse.routes.get(postcard.getPath());
+        if (null == routeMeta) {
+            // routeMet为空，则从groupsIndex查找；没查找到则不存在，查找到则动态添加
+        } else {
+            // 2.从Warehouse.routes中查找到Postcard所对应的RouteMeta后，完善Postcard信息
+            postcard.setType(routeMeta.getType());
+            switch (routeMeta.getType()) {
+                case PROVIDER:  // if the route is provider, should find its instance
+                    Class<? extends IProvider> providerMeta = (Class<? extends IProvider>) routeMeta.getDestination();
+                    // 3.判断Warehouse.providers中是否已经有对应的服务实现层的实例
+                    IProvider instance = Warehouse.providers.get(providerMeta);
+                    if (null == instance) { // There's no instance of this provider
+                        IProvider provider;
+                        try {
+                            // 4. 如果对应的服务实例不存在，则创建一个
+                            provider = providerMeta.getConstructor().newInstance();
+                            provider.init(mContext);
+                            Warehouse.providers.put(providerMeta, provider);
+                            instance = provider;
+                        } catch (Exception e) {
+                            logger.error(TAG, "Init provider failed!", e);
+                            throw new HandlerException("Init provider failed!");
+                        }
+                    }
+                    // 5. 将服务实现层实例对象赋给postcard
+                    postcard.setProvider(instance);
+                    postcard.greenChannel();    // Provider should skip all of interceptors
+                    break;
+                case FRAGMENT:
+                    postcard.greenChannel();    // Fragment needn't interceptors
+                default:
+                    break;
+            }
+        }
+    }
+}
+``` 
+
+如上分析，对于PROVIDER类型的Postcard，LogisticsCenter会返回对应的服务实现层实例对象，特殊提一下，这里的静态方法使用了synchronized标记，来保证多线程操作调用IProvider时取到的对象都是同一个。
+
+2. 在_ARouter.getInstance().build()返回Postcard对象后，继续分析navigation()方法，大体逻辑仍与ARouter方法基本类似类似，唯一不同是Postcard的类型是PROVIDER，这里只分析对应的源码，
+
+``` java
+final class _ARouter {
+    /**
+     * 根据完善的Postcard,执行对应的路由逻辑
+     */
+    private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        final Context currentContext = postcard.getContext();
+        // 1.根据不同的routeType执行不同逻辑;我们的例子中routeType是PROVIDER
+        switch (postcard.getType()) {
+            case ACTIVITY:
+                // ...省略
+                break;
+            case PROVIDER:
+                // 对应PROVIDER类型的Postcard处理很简单，直接返回IProvider的实例即可
+                return postcard.getProvider();
+            case BOARDCAST:
+            case CONTENT_PROVIDER:
+            case FRAGMENT:
+                // ...省略
+            case METHOD:
+            case SERVICE:
+            default:
+                return null;
+        }
+        return null;
+    }
+}
+``` 
+
+
+**总结**
+1. 在组件化思想中，模块间没有直接依赖，各个模块可以将对外提供的方法抽象成一个服务接口模块，各个模块之间只依赖接口层，而不依赖实现层；
+2. ARouter提供了IProvider接口，模块可以继承IProvider接口来暴露服务；
+3. ARouter提供了ARouter.getInstance().build("/calculate/sum").navigation()来获取path对应的服务；
+4. ARouter源码中对于IProvider服务的处理方式是直接返回对应的实现层实例对象；
+5. 各个IProvider的实例对象存放在Warehouse.providers中，ARouter用synchronized保证获取的对象相同(单例模式)；
+
+#### 4.控制反转@Autowired
+
+  在前面demo中我们在**share**模块中可以通过ARouter.getInstance().build("/login/doRegister").navigation()来管理和获取服务接口实现跨模块API调用的。此外也可以用ARouter提供的注入功能实现控制反转：
+
+``` java
+@Route(path = "/share/ShareActivity")
+public class ShareActivity extends AppCompatActivity {
+
+    @Autowired
+    RegisterService registerService;
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_share);
+        
+       // 注入@Autowired标记的变量
+        ARouter.getInstance().inject(this);
+      //  registerService = (RegisterService) ARouter.getInstance().build("/login/doRegister").navigation();
+        findViewById(R.id.share_rigester).setOnClickListener(v -> {
+            ((TextView)findViewById(R.id.tv_show)).setText(registerService.doRegister("aa","bb"));
+        });
+
+    }
+}
+
+```
 
 ### ARouter中拦截器IInterceptor的基本实现
 
