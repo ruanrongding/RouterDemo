@@ -3,7 +3,7 @@ package com.example.share;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.view.View;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +42,17 @@ public class ShareActivity extends AppCompatActivity {
       //  registerService = (RegisterService) ARouter.getInstance().build("/login/doRegister").navigation();
         findViewById(R.id.share_rigester).setOnClickListener(v -> {
             ((TextView)findViewById(R.id.tv_show)).setText(registerService.doRegister("aa","bb"));
+        });
+
+
+
+
+        findViewById(R.id.share_login).setOnClickListener(v -> {
+            //ARouter参数传递
+            ARouter.getInstance().build("/login/LoginActivity")
+                    .withInt("intValue", 10)
+                    .withString("strValue", "hello")
+                    .navigation();
         });
 
     }
