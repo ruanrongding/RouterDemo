@@ -604,7 +604,6 @@ class Warehouse {
 
 #### 3. 发起路由
 
-
 ``` java
 ARouter.getInstance().build("/login/LoginActivity").navigation();
 ```
@@ -927,6 +926,61 @@ public class ARouter$$Group$$first implements IRouteGroup {
 最后总结下ARouter路由的调用过程
 
 ![config](https://obohe.com/i/2022/07/20/nin56i.png)
+
+
+### ARouter中跨模块API调用，通过控制反转来做组件解耦
+
+跨模块API调用。在组件化中，为了接耦各个模块，一般做法是各个模块之间不直接依赖，改为依赖模块的接口层。
+
+#### 1 添加项目依赖和配置导入ARouter
+
+    同上面ARouter的项目配置一样
+
+#### 2.实现抽象接口服务层
+
+   在组件化的实现方式下，我们需要将模块的功能抽象成一个接口模块，模块间的依赖只依赖接口层，而不依赖具体实现层，这样就达到了组件接耦的目的。
+如下所示：我们可以将**login**模块中的功能抽象成一个接口放到**commonlibs**模块中
+   
+1. 在**commonlibs**模块中新建一个RegisterService类继承IProvider的接口
+2. 在**login**模块中RegisterServiceImpl实现了具体功能,并加上了@Route注解
+``` java
+  @Route(path ="/login/doRegister")
+public class RegisterServiceImpl implements RegisterService {
+    @Override
+    public String doRegister(String userName, String passwrod) {
+        return userName + passwrod;
+    }
+    @Override
+    public void init(Context context) {
+
+    }
+}
+
+```
+3. 在**share**模块中可以通过ARouter.getInstance().build("/login/doRegister").navigation()来管理和获取服务接口实现跨模块API调用
+
+``` java
+   public class ShareActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_share);
+        /**
+         *通过ARouter调用login模块中RegisterServiceImpl中的doRegister()方法
+         */
+        RegisterService registerService = (RegisterService) ARouter.getInstance().build("/login/doRegister").navigation();
+        findViewById(R.id.share_rigester).setOnClickListener(v -> {
+            ((TextView)findViewById(R.id.tv_show)).setText(registerService.doRegister("aa","bb"));
+        });
+    }
+}
+
+``` 
+
+### ARouter中跨模块API源码分析
+
+
 
 
 ### ARouter中拦截器IInterceptor的基本实现

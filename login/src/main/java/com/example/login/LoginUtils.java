@@ -5,6 +5,7 @@ package com.example.login;
  */
 public class LoginUtils {
    public static boolean isLogin = false;
+   public static boolean isRegister = false;
     static String password = "123456";
 
 }

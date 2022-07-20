@@ -22,10 +22,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_share).setOnClickListener(v -> {
-//            ARouter.getInstance().build("/share/ShareActivity").navigation();
-            ARouter.getInstance().build("/share/ShareActivity")
-                    .withBoolean("check_login",true)//先判断程序是否登录
-                    .navigation(null, navigationCallback);
+
+            ARouter.getInstance().build("/share/ShareActivity").navigation();
+
+//            ARouter.getInstance().build("/share/ShareActivity")
+//                    .withBoolean("check_login",true)//先判断程序是否登录
+//                    .navigation(null, navigationCallback);
         });
 
     }
@@ -41,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
         public void onLost(Postcard postcard) {
             System.out.println("navigationCallback onLost():"+postcard.getPath());
         }
-
         @Override
         public void onArrival(Postcard postcard) {
         }
