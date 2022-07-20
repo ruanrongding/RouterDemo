@@ -649,10 +649,11 @@ class Warehouse {
 
 #### 3. 发起路由
 
-发起跳转
+
 ``` java
 ARouter.getInstance().build("/login/LoginActivity").navigation();
 ```
+
 最终调用代码则是_ARouter类里面的_navigation方法：
 
 我们先看ARouter的源码实现
@@ -789,7 +790,7 @@ final class _ARouter {
         // 设置Application Context
         postcard.setContext(null == context ? mContext : context);
         try {
-            // 2.LogisticsCenter完善路由信息；详见3.3.6分析
+            // 2.LogisticsCenter完善路由信息；
             // 在我们的例子中postcard现在只有path和group信息,LogisticsCenter会完善要打开的Activity类、routeType等路由信息
             LogisticsCenter.completion(postcard);
         } catch (NoRouteFoundException ex) {
