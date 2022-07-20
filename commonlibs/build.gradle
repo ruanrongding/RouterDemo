@@ -1,10 +1,18 @@
 plugins {
     id 'com.android.library'
 }
-android {
 
+android {
     compileSdk rootProject.ext.android["compileSdkVersion"]
     defaultConfig {
+
+//        Arouter配置
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+
         minSdk rootProject.ext.android["minSdkVersion"]
         targetSdk rootProject.ext.android["targetSdkVersion"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -23,11 +31,19 @@ android {
 }
 
 dependencies {
+
     implementation rootProject.ext.dependencies["appcompat"]
     implementation rootProject.ext.dependencies["material"]
 
     testImplementation rootProject.ext.dependencies["junit"]
     androidTestImplementation rootProject.ext.dependencies["testExtJunit"]
-    androidTestImplementation rootProject.ext.dependencies["espressoCore"]
+    androidTestImplementation rootProject.ext.dependencies["espressoCore"]//
+
+//    // 添加阿里巴巴路由Arouter依赖
+    api  'com.alibaba:arouter-api:1.5.2'
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.2'
+
+
+
 
 }

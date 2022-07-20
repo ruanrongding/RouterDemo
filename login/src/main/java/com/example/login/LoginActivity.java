@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.alibaba.android.arouter.facade.annotation.Route;
 import com.example.commonlibs.service.ServiceFactory;
 import com.example.login.service.AccountService;
 
+@Route(path = "/login/LoginActivity")
 public class LoginActivity extends AppCompatActivity {
 
     @Override

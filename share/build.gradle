@@ -9,6 +9,13 @@ android {
     compileSdk rootProject.ext.android["compileSdkVersion"]
 
     defaultConfig {
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+
         if(is_Module.toBoolean()){
             applicationId "com.example.share"
         }
@@ -62,4 +69,5 @@ dependencies {
 
 
     implementation project(':commonlibs')
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.2'
 }

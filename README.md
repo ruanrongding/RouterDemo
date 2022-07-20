@@ -357,7 +357,10 @@ public class LoginUtils {
 
 **可以采用里巴巴的开源库ARouter来实现跳转功能,ARouter一个用于帮助 Android App 进行组件化改造的框架 —— 支持模块间的路由、通信、解耦**
 
-**ARouter的工作原理**
+
+
+
+# ARouter的工作原理
 
 在代码里加入的@Route注解，会在编译时期通过apt生成一些存储path和activityClass映射关系的类文件，然后app进程启动的时候会拿到这些类文件，把保存这些映射关系的数据读到内存里(保存在map里)，然后在进行路由跳转的时候，通过build()方法传入要到达页面的路由地址，ARouter会通过它自己存储的路由表找到路由地址对应的Activity.class(activity.class = map.get(path))，然后new Intent()，当调用ARouter的withString()方法它的内部会调用intent.putExtra(String name, String value)，调用navigation()方法，它的内部会调用startActivity(intent)进行跳转，这样便可以实现两个相互没有依赖的module顺利的启动对方的Activity了。
 
@@ -374,6 +377,71 @@ ARouter 的特点是灵活性强以及帮助项目解耦。
 
 * 随着业务量增长，App 项目代码会越来越多，开发人员之间的协作也会变得越来越复杂，而解决这个问题的方案一般就是插件化和组件化。
 * 插件化和组件化的前提是解耦，解耦后还要保持页面之间的依赖关系，这时就需要一套路由机制了。
+
+
+### 典型应用
+1. 从外部URL映射到内部页面，以及参数传递与解析
+2. 跨模块页面跳转，模块间解耦
+3. 拦截跳转过程，处理登陆、埋点等逻辑
+4. 跨模块API调用，通过控制反转来做组件解耦
+
+### 基本功能
+1. 添加依赖和配置
+``` java
+     android {
+    defaultConfig {
+        //app,loin,share ,commonlibs等module中的build.gradle文件中都要添加
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+    }
+}
+
+dependencies {
+    // 替换成最新版本, 需要注意的是api
+    // 要与compiler匹配使用，均使用最新版可以保证兼容
+    compile 'com.alibaba:arouter-api:1.5.2'
+    //app,loin,share ,commonlibs等module中的build.gradle文件中都要添加
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.2'
+    ...
+}
+```
+2. 添加注解
+``` java
+// 在支持路由的页面上添加注解(必选)
+// 这里的路径需要注意的是至少需要有两级，/xx/xx
+@Route(path = "/login/LoginActivity")
+public class LoginActivity extends AppCompatActivity {
+    ...
+}
+```
+3. 初始化SDK,可在MainApplication中的初始化
+``` java
+    private void initARouter() {
+        if(BuildConfig.DEBUG){
+           // 这两行必须写在init之前，否则这些配置在init过程中将无效
+            ARouter.openLog();// 打印日志
+            ARouter.openDebug();// 开启调试模式(如果在InstantRun模式下运行，必须开启调试模式！线上版本需要关闭,否则有安全风险)
+        }
+        ARouter.init(this);
+    }
+```
+4. 发起路由操作跳转
+``` java
+  // 1. 应用内简单的跳转(通过URL跳转在'进阶用法'中)
+ARouter.getInstance().build("/login/LoginActivity").navigation();
+
+// 2. 跳转并携带参数
+ARouter.getInstance().build("/login/LoginActivity"")
+            .withLong("key1", 666L)
+            .withString("key3", "888")
+            .withObject("key4", new Test("Jack", "Rose"))
+            .navigation();
+```
+
+
 
 
 
