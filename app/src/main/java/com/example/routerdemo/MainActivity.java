@@ -1,8 +1,10 @@
 package com.example.routerdemo;
 
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.android.arouter.facade.Postcard;
@@ -32,6 +34,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+    }
 
     //拦截器回调
     private NavigationCallback navigationCallback = new NavigationCallback() {

@@ -30,15 +30,15 @@
 
 分别在项目中创建项目组件**login, share,commonlibs,app**等四个模块，其中**commmonlibs**是公用类库。**login，share,app**每个模块目前都可以单独运行
 
-  ![项目结构图](https://seikim.com/i/2022/07/19/n861rf.png)
+![项目结构图](https://files.imgdb.cn/static/images/9e/60/62e781d78c61dc3b8ed39e60.jpg)
 
 #### 2.统一Gradle版本号
 
 **每一个模块都是一个application(除了commonlibs,它是个公用的类库)，所以每个模块都会有一个build.gradle，各个模块里面的配置不同，我们需要重新统一Gradle**
 1. 在主模块创建config.gradle
 
-   ![config](https://obohe.com/i/2022/07/19/ibrhcl.png)
-   
+   ![config](https://files.imgdb.cn/static/images/50/18/62e782638c61dc3b8ed45018.jpg)
+
 2. 在config.gradle里去添加一些版本号
 ``` java
 // 统一Gradle版本号
@@ -101,7 +101,7 @@ dependencies {
 
 }
 ``` 
-   
+
 #### 3.组件模式和集成模式转换
 1. 在主模块gradle.properties里添加布尔类型选项。
 ``` java
@@ -142,11 +142,11 @@ if(is_Module.toBoolean()){
 #### 4.AndroidManifest的切换
 1. 在组件模块里的main文件里新建manifest文件夹
 
-   ![config](https://seikim.com/i/2022/07/19/naai9o.png)
+   ![config](https://pic.imgdb.cn/item/62e782df8c61dc3b8ed4fb78.jpg)
 
-2. 重写一个AndroidManifest.xml文件，集成模式下，业务组件的表单是绝对不能拥有自己的 Application 和 launch 的 
-Activity的，也不能声明APP名称、图标等属性，总之app壳工程有的属性，业务组件都不能有，在这个表单中只声明了应用的主题，
-而且这个主题还是跟app壳工程中的主题是一致的
+2. 重写一个AndroidManifest.xml文件，集成模式下，业务组件的表单是绝对不能拥有自己的 Application 和 launch 的
+   Activity的，也不能声明APP名称、图标等属性，总之app壳工程有的属性，业务组件都不能有，在这个表单中只声明了应用的主题，
+   而且这个主题还是跟app壳工程中的主题是一致的
 ``` java
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -177,11 +177,11 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 每个模块在运行时都会有自己的application，而在组件化开发过程中，我们的主模块只能有一个application，但在单独运行时又需要自己的application这里就需要配置一下。
 1. 在业务模块添加新文件夹命名module
 
-   ![config](https://obohe.com/i/2022/07/19/nbsgf0.png)
+   ![config](https://files.imgdb.cn/static/images/39/4e/62e783ca8c61dc3b8ed6394e.jpg)
 
 2. 在里面建一个application文件
 
-   ![config](https://obohe.com/i/2022/07/19/nc8qry.png)
+   ![config](https://files.imgdb.cn/static/images/39/52/62e783ca8c61dc3b8ed63952.jpg)
 
 3. 并且我们在build.gradle文件里配置module文件夹使其在单独运行时能够运行单独的application
    在配置manifest的语句中添加java.srcDir 'src/main/module'
@@ -223,7 +223,7 @@ Activity的，也不能声明APP名称、图标等属性，总之app壳工程有
 
 # 组件间的业务数据交互
 ### 1. 组件之间的数据传递
-  由于主项目与组件，组件与组件之间都是不可以直接使用类的相互引用来进行数据传递的，那么在开发过程中如果有组件间的数据传递时应该如何解决呢，这里我们可以采用 [接口 + 实现] 的方式来解决。 在commonlibs基础库里定义组件可以对外提供访问自身数据的抽象方法的 Service。并且提供了一个 ServiceFactory，每个组件中都要提供一个类实现自己对应的 Service 中的抽象方法。在组件加载后，需要创建一个实现类的对象，然后将实现了 Service的类的对象添加到ServiceFactory 中。这样在不同组件交互时就可以通过 ServiceFactory 获取想要调用的组件的接口实现，然后调用其中的特定方法就可以实现组件间的数据传递与方法调用。 ServiceFactory 中也会提供所有的 Service 的空实现，在组件单独调试或部分集成调试时避免出现由于实现类对象为空引起的空指针异常。 
+由于主项目与组件，组件与组件之间都是不可以直接使用类的相互引用来进行数据传递的，那么在开发过程中如果有组件间的数据传递时应该如何解决呢，这里我们可以采用 [接口 + 实现] 的方式来解决。 在commonlibs基础库里定义组件可以对外提供访问自身数据的抽象方法的 Service。并且提供了一个 ServiceFactory，每个组件中都要提供一个类实现自己对应的 Service 中的抽象方法。在组件加载后，需要创建一个实现类的对象，然后将实现了 Service的类的对象添加到ServiceFactory 中。这样在不同组件交互时就可以通过 ServiceFactory 获取想要调用的组件的接口实现，然后调用其中的特定方法就可以实现组件间的数据传递与方法调用。 ServiceFactory 中也会提供所有的 Service 的空实现，在组件单独调试或部分集成调试时避免出现由于实现类对象为空引起的空指针异常。
 
 
 **具体实现**
@@ -446,7 +446,7 @@ ARouter.getInstance().build("/login/LoginActivity"")
 
 ### ARouter基本用法源码分析
 
- ARouter是通过三步（添加注解、初始化SDK、发起路由）来实现的
+ARouter是通过三步（添加注解、初始化SDK、发起路由）来实现的
 
 #### 1. 注解处理APT
 
@@ -454,7 +454,7 @@ ARouter.getInstance().build("/login/LoginActivity"")
 
 ARouter APT自动生成三个class文件（位于login/build/generated/ap_generated_sources/debug/out/目录下）
 
-![项目结构图](https://obohe.com/i/2022/07/20/m7qdv6.png)
+![项目结构图](https://files.imgdb.cn/static/images/77/7c/62e784cd8c61dc3b8ed7777c.png)
 
 这三个class分别实现了IRouteGroup、IRouteRoot、IProviderGroup，且类名都以ARouter$开头，都位于com.alibaba.android.arouter.routes包下：
 ``` java
@@ -489,7 +489,7 @@ public class ARouter$$Root$$login implements IRouteRoot {
 ```
 Arouter的初始化ARouter.init(getApplication())，过程如下：
 
-![项目结构图](https://seikim.com/i/2022/07/20/mgr3rt.png)
+![项目结构图](https://files.imgdb.cn/static/images/77/7e/62e784cd8c61dc3b8ed7777e.png)
 
 我们具体看看init()里面做了什么事情
 ``` java
@@ -934,9 +934,9 @@ public class ARouter$$Group$$first implements IRouteGroup {
 
 #### 2.实现抽象接口服务层
 
-   在组件化的实现方式下，我们需要将模块的功能抽象成一个接口模块，模块间的依赖只依赖接口层，而不依赖具体实现层，这样就达到了组件接耦的目的。
+在组件化的实现方式下，我们需要将模块的功能抽象成一个接口模块，模块间的依赖只依赖接口层，而不依赖具体实现层，这样就达到了组件接耦的目的。
 如下所示：我们可以将**login**模块中的功能抽象成一个接口放到**commonlibs**模块中
-   
+
 1. 在**commonlibs**模块中新建一个RegisterService类继承IProvider的接口
 2. 在**login**模块中RegisterServiceImpl实现了具体功能,并加上了@Route注解
 ``` java
@@ -1154,7 +1154,7 @@ final class _ARouter {
 
 #### 4.控制反转@Autowired
 
-  在前面demo中我们在**share**模块中可以通过ARouter.getInstance().build("/login/doRegister").navigation()来管理和获取服务接口实现跨模块API调用的。此外也可以用ARouter提供的注入功能实现控制反转：
+在前面demo中我们在**share**模块中可以通过ARouter.getInstance().build("/login/doRegister").navigation()来管理和获取服务接口实现跨模块API调用的。此外也可以用ARouter提供的注入功能实现控制反转：
 
 ``` java
 @Route(path = "/share/ShareActivity")
@@ -1216,7 +1216,7 @@ public class LoginActivity extends AppCompatActivity {
 
 ARouter APT处理@Autowired后自动生成一个class文件（位于/login/build/generated/ap_generdated_souces/debug/out/com/example/login目录下）：
 
-![项目结构图](https://seikim.com/i/2022/07/20/scikrc.png)
+![项目结构图](https://files.imgdb.cn/static/images/77/84/62e784cd8c61dc3b8ed77784.png)
 
 这个class实现了ISyringe，位于com.example.login（与@Autowired标记参数的所在类的包名一样）：
 
@@ -1419,7 +1419,7 @@ public class LoginInterceptor implements IInterceptor {
 
 对于@Interceptor注解，ARouter会自动在如下位置生成代码：
 
-![项目结构图](https://seikim.com/i/2022/07/20/o141z1.png)
+![项目结构图](https://files.imgdb.cn/static/images/77/8a/62e784cd8c61dc3b8ed7778a.png)
 
 自动生成的代码如下：
 ``` java
@@ -1655,15 +1655,3 @@ public class InterceptorServiceImpl implements InterceptorService {
     }
 }
 ```
-
-``` java
-```
-
-
-
-
-
-
-
-
-
